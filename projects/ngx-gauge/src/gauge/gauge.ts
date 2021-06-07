@@ -3,7 +3,7 @@ import {
     Input,
     SimpleChanges,
     ViewEncapsulation,
-    Renderer,
+    Renderer2,
     AfterViewInit,
     ElementRef,
     OnChanges,
@@ -55,11 +55,13 @@ export type NgxGaugeCap = 'round' | 'butt';
 export class NgxGauge implements AfterViewInit, OnChanges, OnDestroy {
 
     @ViewChild('canvas', { static: true }) _canvas: ElementRef;
+    @ViewChild('rLabel', { static: true }) _label: ElementRef;
+    @ViewChild('reading', { static: true }) _reading: ElementRef;
 
-    @ContentChild(NgxGaugeLabel, {static: false}) _labelChild: NgxGaugeLabel;
-    @ContentChild(NgxGaugePrepend, {static: false}) _prependChild: NgxGaugePrepend;
-    @ContentChild(NgxGaugeAppend, {static: false}) _appendChild: NgxGaugeAppend;
-    @ContentChild(NgxGaugeValue, {static: false}) _valueDisplayChild: NgxGaugeValue;
+    @ContentChild(NgxGaugeLabel) _labelChild: NgxGaugeLabel;
+    @ContentChild(NgxGaugePrepend) _prependChild: NgxGaugePrepend;
+    @ContentChild(NgxGaugeAppend) _appendChild: NgxGaugeAppend;
+    @ContentChild(NgxGaugeValue) _valueDisplayChild: NgxGaugeValue;
 
     private _size: number = DEFAULTS.SIZE;
     private _min: number = DEFAULTS.MIN;
@@ -128,7 +130,7 @@ export class NgxGauge implements AfterViewInit, OnChanges, OnDestroy {
 
     @Input() duration: number = 1200;
 
-    constructor(private _elementRef: ElementRef, private _renderer: Renderer) { }
+    constructor(private _elementRef: ElementRef, private _renderer: Renderer2) { }
 
     ngOnChanges(changes: SimpleChanges) {
         const isCanvasPropertyChanged = changes['thick'] || changes['type'] || changes['cap'] || changes['size'];
@@ -142,7 +144,7 @@ export class NgxGauge implements AfterViewInit, OnChanges, OnDestroy {
                     ov = changes['value'].previousValue;
                 }
                 this._update(nv, ov);
-            } 
+            }
             if (isCanvasPropertyChanged) {
                 this._destroy();
                 this._init();
@@ -151,10 +153,14 @@ export class NgxGauge implements AfterViewInit, OnChanges, OnDestroy {
     }
 
     private _updateSize() {
-        this._renderer.setElementStyle(this._elementRef.nativeElement, 'width', cssUnit(this._size));
-        this._renderer.setElementStyle(this._elementRef.nativeElement, 'height', cssUnit(this._size));
-        this._canvas.nativeElement.width = this.size;
-        this._canvas.nativeElement.height = this.size;
+        this._renderer.setStyle(this._elementRef.nativeElement, 'width', cssUnit(this._getWidth()));
+        this._renderer.setStyle(this._elementRef.nativeElement, 'height', cssUnit(this._getCanvasHeight()));
+        this._canvas.nativeElement.width = this._getWidth();
+        this._canvas.nativeElement.height = this._getCanvasHeight();
+        this._renderer.setStyle(this._label.nativeElement,
+            'transform', 'translateY(' + (this.size / 3 * 2 - this.size / 13 / 4) + 'px)');
+        this._renderer.setStyle(this._reading.nativeElement,
+            'transform', 'translateY(' + (this.size / 2 - this.size * 0.22 / 2) + 'px)');
     }
 
     ngAfterViewInit() {
@@ -261,6 +267,13 @@ export class NgxGauge implements AfterViewInit, OnChanges, OnDestroy {
 
     private _getHeight() {
         return this.size;
+    }
+
+    // canvas height will be shorter for type 'semi' and 'arch'
+    private _getCanvasHeight() {
+        return (this.type == 'arch' || this.type == 'semi')
+            ? 0.85 * this._getHeight()
+            : this._getHeight();
     }
 
     private _getRadius() {
