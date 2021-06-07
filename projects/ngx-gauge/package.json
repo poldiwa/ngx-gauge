@@ -4,7 +4,7 @@
   "description": "A highly customizable Gauge Component for Angular 4+ apps and dashboards",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ashish-chopra/ngx-gauge.git"
+    "url": "git+https://github.com/poldiwa/ngx-gauge.git"
   },
   "peerDependencies": {
     "@angular/common": "^11.0.0",
@@ -27,10 +27,10 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ashish-chopra/ngx-gauge/issues"
+    "url": "https://github.com/poldiwa/ngx-gauge/issues"
   },
   "dependencies": {
     "tslib": "^2.0.0"
   },
-  "homepage": "https://github.com/ashish-chopra/ngx-gauge#readme"
+  "homepage": "https://github.com/poldiwa/ngx-gauge#readme"
 }
