@@ -75,11 +75,13 @@ class NgxGauge {
         this.type = DEFAULTS.TYPE;
         this.cap = DEFAULTS.CAP;
         this.thick = DEFAULTS.THICK;
+        this.shadowColor = '';
         this.foregroundColor = DEFAULTS.FOREGROUND_COLOR;
         this.backgroundColor = DEFAULTS.BACKGROUND_COLOR;
         this.thresholds = Object.create(null);
         // If set to true, thresholds will remain their color even if the gauge is in another threshold
         this.preserveThresholds = false;
+        this.thumb = false;
         this._value = 0;
         this.duration = 1200;
     }
@@ -177,22 +179,36 @@ class NgxGauge {
         if (this.thresholds && this._initialized) {
             let percentages = Object.keys(this.thresholds), arcLength = tail - start, valuePercent = (currentValue - start) / arcLength;
             this._clear();
+            let thumbColor = this.backgroundColor;
             for (let i = 0; i < percentages.length; i++) {
                 let startPercentage = (Number(percentages[i]) / 100), nextPercentage = (Number(percentages[i + 1]) / 100) || 1, percentageToTravel = (nextPercentage - startPercentage), color = this.thresholds[percentages[i]].color, fallbackColor = this.thresholds[percentages[i]].fallbackColor || this.backgroundColor;
                 if (valuePercent >= startPercentage && valuePercent <= nextPercentage) {
                     let percentageOfCurrentArc = (valuePercent - startPercentage) / percentageToTravel;
                     let activeArcEnd = start + (arcLength * percentageToTravel * percentageOfCurrentArc);
+                    thumbColor = color;
                     this._drawArc(start, activeArcEnd, color);
+                    if (this.shadowColor) {
+                        this._drawArcShadow(start, activeArcEnd, this.shadowColor);
+                    }
                     let inactiveArcEnd = activeArcEnd + (arcLength * percentageToTravel * (1 - percentageOfCurrentArc));
                     this._drawArc(activeArcEnd, inactiveArcEnd, fallbackColor);
+                    if (this.shadowColor) {
+                        this._drawArcShadow(activeArcEnd, inactiveArcEnd, this.shadowColor);
+                    }
                     start = inactiveArcEnd;
                 }
                 else {
                     let arcColor = (startPercentage >= valuePercent) ? fallbackColor : color;
                     let end = start + (arcLength * percentageToTravel);
                     this._drawArc(start, end, arcColor);
+                    if (this.shadowColor) {
+                        this._drawArcShadow(start, end, this.shadowColor);
+                    }
                     start = end;
                 }
+            }
+            if (this.thumb) {
+                this._drawThumb(currentValue, thumbColor);
             }
         }
     }
@@ -203,6 +219,27 @@ class NgxGauge {
         this._context.strokeStyle = color;
         this._context.arc(center.x, center.y, radius, start, end, false);
         this._context.stroke();
+    }
+    _drawArcShadow(start, end, color) {
+        let center = this._getCenter();
+        let radius = this._getRadius() * 0.89;
+        this._context.beginPath();
+        this._context.strokeStyle = color;
+        this._context.arc(center.x, center.y, radius, start, end, false);
+        this._context.stroke();
+    }
+    _drawThumb(valuePercent, color) {
+        let radius = this.thick * 0.8;
+        let x = (this._getRadius() * Math.cos(valuePercent)) + (this._getWidth() / 2);
+        let y = (this._getRadius() * Math.sin(valuePercent)) + (this._getHeight() / 2);
+        this._context.beginPath();
+        this._context.arc(x, y, radius, 0, 2 * Math.PI, false);
+        this._context.fillStyle = "#fff";
+        this._context.fill();
+        this._context.lineWidth = this.thick / 3;
+        this._context.strokeStyle = color;
+        this._context.stroke();
+        this._context.lineWidth = this.thick;
     }
     _clear() {
         this._context.clearRect(0, 0, this._getWidth(), this._getHeight());
@@ -335,10 +372,12 @@ NgxGauge.propDecorators = {
     label: [{ type: Input }],
     append: [{ type: Input }],
     prepend: [{ type: Input }],
+    shadowColor: [{ type: Input }],
     foregroundColor: [{ type: Input }],
     backgroundColor: [{ type: Input }],
     thresholds: [{ type: Input }],
     preserveThresholds: [{ type: Input }],
+    thumb: [{ type: Input }],
     value: [{ type: Input }],
     duration: [{ type: Input }]
 };

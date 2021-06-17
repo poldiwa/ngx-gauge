@@ -35,10 +35,12 @@ export declare class NgxGauge implements AfterViewInit, OnChanges, OnDestroy {
     label: string;
     append: string;
     prepend: string;
+    shadowColor: string;
     foregroundColor: string;
     backgroundColor: string;
     thresholds: Object;
     preserveThresholds: Object;
+    thumb: Object;
     private _value;
     get value(): number;
     set value(val: number);
@@ -52,6 +54,8 @@ export declare class NgxGauge implements AfterViewInit, OnChanges, OnDestroy {
     private _drawShell;
     private _drawShellWithSegments;
     private _drawArc;
+    private _drawArcShadow;
+    private _drawThumb;
     private _clear;
     private _getWidth;
     private _getHeight;

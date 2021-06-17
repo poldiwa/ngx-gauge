@@ -91,11 +91,13 @@
             this.type = DEFAULTS.TYPE;
             this.cap = DEFAULTS.CAP;
             this.thick = DEFAULTS.THICK;
+            this.shadowColor = '';
             this.foregroundColor = DEFAULTS.FOREGROUND_COLOR;
             this.backgroundColor = DEFAULTS.BACKGROUND_COLOR;
             this.thresholds = Object.create(null);
             // If set to true, thresholds will remain their color even if the gauge is in another threshold
             this.preserveThresholds = false;
+            this.thumb = false;
             this._value = 0;
             this.duration = 1200;
         }
@@ -213,22 +215,36 @@
             if (this.thresholds && this._initialized) {
                 var percentages = Object.keys(this.thresholds), arcLength = tail - start, valuePercent = (currentValue - start) / arcLength;
                 this._clear();
+                var thumbColor = this.backgroundColor;
                 for (var i = 0; i < percentages.length; i++) {
                     var startPercentage = (Number(percentages[i]) / 100), nextPercentage = (Number(percentages[i + 1]) / 100) || 1, percentageToTravel = (nextPercentage - startPercentage), color = this.thresholds[percentages[i]].color, fallbackColor = this.thresholds[percentages[i]].fallbackColor || this.backgroundColor;
                     if (valuePercent >= startPercentage && valuePercent <= nextPercentage) {
                         var percentageOfCurrentArc = (valuePercent - startPercentage) / percentageToTravel;
                         var activeArcEnd = start + (arcLength * percentageToTravel * percentageOfCurrentArc);
+                        thumbColor = color;
                         this._drawArc(start, activeArcEnd, color);
+                        if (this.shadowColor) {
+                            this._drawArcShadow(start, activeArcEnd, this.shadowColor);
+                        }
                         var inactiveArcEnd = activeArcEnd + (arcLength * percentageToTravel * (1 - percentageOfCurrentArc));
                         this._drawArc(activeArcEnd, inactiveArcEnd, fallbackColor);
+                        if (this.shadowColor) {
+                            this._drawArcShadow(activeArcEnd, inactiveArcEnd, this.shadowColor);
+                        }
                         start = inactiveArcEnd;
                     }
                     else {
                         var arcColor = (startPercentage >= valuePercent) ? fallbackColor : color;
                         var end = start + (arcLength * percentageToTravel);
                         this._drawArc(start, end, arcColor);
+                        if (this.shadowColor) {
+                            this._drawArcShadow(start, end, this.shadowColor);
+                        }
                         start = end;
                     }
+                }
+                if (this.thumb) {
+                    this._drawThumb(currentValue, thumbColor);
                 }
             }
         };
@@ -239,6 +255,27 @@
             this._context.strokeStyle = color;
             this._context.arc(center.x, center.y, radius, start, end, false);
             this._context.stroke();
+        };
+        NgxGauge.prototype._drawArcShadow = function (start, end, color) {
+            var center = this._getCenter();
+            var radius = this._getRadius() * 0.89;
+            this._context.beginPath();
+            this._context.strokeStyle = color;
+            this._context.arc(center.x, center.y, radius, start, end, false);
+            this._context.stroke();
+        };
+        NgxGauge.prototype._drawThumb = function (valuePercent, color) {
+            var radius = this.thick * 0.8;
+            var x = (this._getRadius() * Math.cos(valuePercent)) + (this._getWidth() / 2);
+            var y = (this._getRadius() * Math.sin(valuePercent)) + (this._getHeight() / 2);
+            this._context.beginPath();
+            this._context.arc(x, y, radius, 0, 2 * Math.PI, false);
+            this._context.fillStyle = "#fff";
+            this._context.fill();
+            this._context.lineWidth = this.thick / 3;
+            this._context.strokeStyle = color;
+            this._context.stroke();
+            this._context.lineWidth = this.thick;
         };
         NgxGauge.prototype._clear = function () {
             this._context.clearRect(0, 0, this._getWidth(), this._getHeight());
@@ -372,10 +409,12 @@
         label: [{ type: core.Input }],
         append: [{ type: core.Input }],
         prepend: [{ type: core.Input }],
+        shadowColor: [{ type: core.Input }],
         foregroundColor: [{ type: core.Input }],
         backgroundColor: [{ type: core.Input }],
         thresholds: [{ type: core.Input }],
         preserveThresholds: [{ type: core.Input }],
+        thumb: [{ type: core.Input }],
         value: [{ type: core.Input }],
         duration: [{ type: core.Input }]
     };
